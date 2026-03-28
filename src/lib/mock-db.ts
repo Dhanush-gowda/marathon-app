@@ -2,15 +2,30 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-const DB_FILE = path.join(process.cwd(), "mock-data.json");
+// On Vercel, process.cwd() is read-only. Use /tmp for persistence within warm lambdas.
+const SOURCE_DB = path.join(process.cwd(), "mock-data.json");
+const isVercel = !!process.env.VERCEL;
+const DB_FILE = isVercel ? "/tmp/mock-data.json" : SOURCE_DB;
 
 interface DBData {
   users: any[];
   results: any[];
 }
 
+function ensureTmpDB() {
+  if (isVercel && !fs.existsSync(DB_FILE)) {
+    try {
+      const seed = fs.existsSync(SOURCE_DB)
+        ? fs.readFileSync(SOURCE_DB, "utf-8")
+        : '{"users":[],"results":[]}';
+      fs.writeFileSync(DB_FILE, seed);
+    } catch {}
+  }
+}
+
 function readDB(): DBData {
   try {
+    ensureTmpDB();
     if (fs.existsSync(DB_FILE)) {
       return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
     }
@@ -123,6 +138,7 @@ class QueryBuilder implements PromiseLike<QueryResult> {
           checkin_status: false,
           bib_number: null,
           password_hash: null,
+          categories: null,
           rank: null,
           ...this._mutateData,
         };

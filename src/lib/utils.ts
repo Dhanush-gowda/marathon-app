@@ -19,8 +19,8 @@ export function parseCSVTime(time: string): string {
 }
 
 export const CATEGORIES = [
-  "5K Run",
-  "3K Run",
+  "RBA Warrior 5K",
+  "RBA Warrior 3K",
 ] as const;
 
 export type Category = (typeof CATEGORIES)[number];
@@ -67,7 +67,7 @@ export function getNextBibNumber(users: Array<{ bib_number?: string | null }>): 
 
 export function buildTicketPayload(participant: TicketParticipant): string {
   return [
-    "TURAHALLI-RUN",
+    "RBA-BATTLE-RUN",
     participant.id,
     participant.bib_number ?? "",
     participant.email,
@@ -76,7 +76,7 @@ export function buildTicketPayload(participant: TicketParticipant): string {
 }
 
 export function parseTicketPayload(payload: string) {
-  if (!payload.startsWith("TURAHALLI-RUN|")) {
+  if (!payload.startsWith("RBA-BATTLE-RUN|")) {
     return null;
   }
 

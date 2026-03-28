@@ -65,7 +65,7 @@ export default function RegisterPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">🏃</div>
           <h1 className="text-2xl sm:text-3xl font-bold">Create Your Account</h1>
-          <p className="text-gray-400 mt-2 text-sm">Sign up to register for the Turahalli Run</p>
+          <p className="text-gray-400 mt-2 text-sm">Sign up to register for the RBA Battle Run Fest</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">

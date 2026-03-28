@@ -35,7 +35,8 @@ export function Navbar() {
   const userLinks = loggedInUser
     ? [
         { href: "/", label: "Home" },
-        { href: "/race-register", label: "Race Registration" },
+        { href: "/race-register", label: "Register for Race" },
+        { href: "/my-ticket", label: "My Ticket" },
         { href: "/leaderboard", label: "Leaderboard" },
         { href: "/route-map", label: "Route Map" },
       ]
@@ -61,7 +62,7 @@ export function Navbar() {
           <Link href={isAdmin ? "/admin/dashboard" : "/"} className="flex items-center gap-2">
             <span className="text-2xl">🏃</span>
             <span className="font-bold text-lg bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              {isAdmin ? "Admin Panel" : "Marathon Manager"}
+              {isAdmin ? "Admin Panel" : "RBA Battle Run Fest"}
             </span>
           </Link>
 

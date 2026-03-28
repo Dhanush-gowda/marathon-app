@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { requireAdmin } from "@/lib/auth";
-import { parseTicketPayload } from "@/lib/utils";
+import { parseTicketPayload, getNextBibNumber } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   const auth = requireAdmin(request);
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     const { data: user } = await supabaseAdmin
       .from("users")
-      .select("id, name, bib_number")
+      .select("id, name, email, phone, bib_number, categories, checkin_status")
       .eq("id", resolvedUserId)
       .single();
 
@@ -40,9 +40,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Participant not found" }, { status: 404 });
     }
 
+    // If user has no BIB yet, assign one now (payment confirmed by admin)
+    let assignedBib = user.bib_number;
+    if (!assignedBib) {
+      const { data: allUsers } = await supabaseAdmin
+        .from("users")
+        .select("id, bib_number");
+      assignedBib = getNextBibNumber(allUsers || []);
+    }
+
     const { error } = await supabaseAdmin
       .from("users")
-      .update({ checkin_status: true })
+      .update({ checkin_status: true, bib_number: assignedBib })
       .eq("id", resolvedUserId);
 
     if (error) {
@@ -54,6 +63,7 @@ export async function POST(request: NextRequest) {
       success: true,
       user: {
         ...user,
+        bib_number: assignedBib,
         checkin_status: true,
       },
     });

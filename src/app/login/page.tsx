@@ -61,7 +61,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-3">🏃</div>
           <h1 className="text-2xl sm:text-3xl font-bold">Welcome Back</h1>
-          <p className="text-gray-400 mt-2 text-sm">Sign in to your participant account</p>
+          <p className="text-gray-400 mt-2 text-sm">Sign in to RBA Battle Run Fest</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-5">
