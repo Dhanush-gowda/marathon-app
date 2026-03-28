@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoadingSpinner, EmptyState } from "@/components/UI";
 import { QrScanner } from "@/components/QrScanner";
-import { getNextBibNumber, type User } from "@/lib/utils";
+import { getNextBibNumber, getParticipantCategoryLabel, type User } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 export default function AdminParticipantsPage() {
@@ -91,11 +91,14 @@ export default function AdminParticipantsPage() {
         },
         body: JSON.stringify({ userId }),
       });
+      const data = await res.json();
       if (res.ok) {
         toast.success("Checked in!");
         setParticipants((prev) =>
-          prev.map((p) => (p.id === userId ? { ...p, checkin_status: true } : p))
+          prev.map((p) => (p.id === userId ? { ...p, checkin_status: true, bib_number: data.user?.bib_number || p.bib_number } : p))
         );
+      } else {
+        toast.error(data.error || "Check-in failed");
       }
     } catch {
       toast.error("Check-in failed");
@@ -122,7 +125,9 @@ export default function AdminParticipantsPage() {
     toast.success(`${data.user?.name || "Participant"} checked in from QR`);
     setParticipants((prev) =>
       prev.map((p) =>
-        p.id === data.user?.id ? { ...p, checkin_status: true } : p
+        p.id === data.user?.id
+          ? { ...p, checkin_status: true, bib_number: data.user?.bib_number || p.bib_number }
+          : p
       )
     );
   };
@@ -192,7 +197,7 @@ export default function AdminParticipantsPage() {
                       <td className="px-4 py-3 text-gray-400 text-sm">{p.email}</td>
                       <td className="px-4 py-3 text-gray-400 text-sm">{p.phone}</td>
                       <td className="px-4 py-3">
-                        <span className="px-2 py-1 rounded-full bg-white/10 text-xs">{p.category}</span>
+                        <span className="px-2 py-1 rounded-full bg-white/10 text-xs">{getParticipantCategoryLabel(p)}</span>
                       </td>
                       <td className="px-4 py-3 font-mono">{p.bib_number || "—"}</td>
                       <td className="px-4 py-3">
@@ -239,7 +244,7 @@ export default function AdminParticipantsPage() {
                     <p className="text-xs text-gray-400 truncate">{p.email}</p>
                   </div>
                   <span className="px-2 py-1 rounded-full bg-white/10 text-xs shrink-0 ml-2">
-                    {p.category}
+                    {getParticipantCategoryLabel(p)}
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-400 mb-3">

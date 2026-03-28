@@ -5,3 +5,4 @@ node_modules/
 next-env.d.ts
 mock-data.json
 .vercel
+.env*.local

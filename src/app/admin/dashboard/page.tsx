@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { StatCard } from "@/components/UI";
 import { LoadingSpinner } from "@/components/UI";
+import { normalizeCategories } from "@/lib/utils";
 
 interface DashboardStats {
   totalParticipants: number;
@@ -45,8 +46,16 @@ export default function AdminDashboardPage() {
       const resultsData = await resultsRes.json();
 
       const categories: Record<string, number> = {};
-      participants.forEach((p: { category: string }) => {
-        categories[p.category] = (categories[p.category] || 0) + 1;
+      participants.forEach((p: { category?: string | null; categories?: string | null }) => {
+        const participantCategories = normalizeCategories(p.categories || p.category);
+        if (participantCategories.length === 0) {
+          categories.Unassigned = (categories.Unassigned || 0) + 1;
+          return;
+        }
+
+        participantCategories.forEach((category) => {
+          categories[category] = (categories[category] || 0) + 1;
+        });
       });
 
       setStats({

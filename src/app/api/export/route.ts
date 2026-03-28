@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { requireAdmin } from "@/lib/auth";
+import { getParticipantCategoryLabel } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   const auth = requireAdmin(request);
@@ -13,7 +14,7 @@ export async function GET(request: NextRequest) {
     // Fetch all participants with their results
     const { data: users, error } = await supabaseAdmin
       .from("users")
-      .select("id, name, email, phone, category, bib_number, checkin_status, created_at")
+      .select("id, name, email, phone, category, categories, bib_number, checkin_status, created_at")
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
         `"${(user.name || "").replace(/"/g, '""')}"`,
         user.email,
         user.phone,
-        user.category,
+        getParticipantCategoryLabel(user),
         user.bib_number || "",
         user.checkin_status ? "Yes" : "No",
         result ? result.finish_time : "",

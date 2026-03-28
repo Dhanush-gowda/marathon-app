@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { verifyUserToken } from "@/lib/auth";
+import { formatCategories, getPrimaryCategory } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +35,8 @@ export async function POST(request: NextRequest) {
         name: user.name,
         email: user.email,
         phone: user.phone,
-        categories: user.categories || user.category || null,
+        category: getPrimaryCategory(user.categories || user.category),
+        categories: formatCategories(user.categories || user.category),
         bib_number: user.bib_number,
         checkin_status: user.checkin_status,
       },

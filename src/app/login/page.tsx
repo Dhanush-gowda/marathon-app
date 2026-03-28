@@ -15,11 +15,13 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+
       // Try admin login first
       const adminRes = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password }),
       });
       if (adminRes.ok) {
         const adminData = await adminRes.json();
@@ -30,11 +32,17 @@ export default function LoginPage() {
         return;
       }
 
+      if (normalizedEmail === "admin@marathon.com") {
+        const adminData = await adminRes.json();
+        toast.error(adminData.error || "Admin login failed");
+        return;
+      }
+
       // Try user login
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -76,7 +84,7 @@ export default function LoginPage() {
               className="input-field"
               placeholder="john@example.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.trimStart())}
             />
           </div>
 

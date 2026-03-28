@@ -1,23 +1,16 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { createToken } from "@/lib/auth";
+import { createToken, getAdminCredentials } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email, password } = body;
 
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.ADMIN_PASSWORD;
+    const adminCredentials = getAdminCredentials();
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    if (!adminEmail || !adminPassword) {
-      return NextResponse.json(
-        { error: "Admin credentials not configured" },
-        { status: 500 }
-      );
-    }
-
-    if (email !== adminEmail || password !== adminPassword) {
+    if (normalizedEmail !== adminCredentials.email || password !== adminCredentials.password) {
       return NextResponse.json(
         { error: "Invalid credentials" },
         { status: 401 }

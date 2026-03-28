@@ -2,6 +2,15 @@ import { NextRequest } from "next/server";
 import { createHash, randomInt } from "crypto";
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-change-me";
+const DEFAULT_ADMIN_EMAIL = "admin@marathon.com";
+const DEFAULT_ADMIN_PASSWORD = "Marathon@2026";
+
+export function getAdminCredentials() {
+  return {
+    email: (process.env.ADMIN_EMAIL || DEFAULT_ADMIN_EMAIL).trim().toLowerCase(),
+    password: process.env.ADMIN_PASSWORD || DEFAULT_ADMIN_PASSWORD,
+  };
+}
 
 // ── Admin tokens ──
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { formatCategories, normalizeCategories } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 interface UserInfo {
@@ -20,12 +21,32 @@ export default function MyTicketPage() {
   const [loading, setLoading] = useState(true);
   const [qrCodeUrl, setQrCodeUrl] = useState("");
 
+  const hydrateFromStorage = () => {
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user_data") || "null");
+      if (storedUser?.id) {
+        setUser((current) => current || {
+          id: storedUser.id,
+          name: storedUser.name,
+          email: storedUser.email,
+          phone: storedUser.phone,
+          categories: formatCategories(storedUser.categories),
+          bib_number: storedUser.bib_number || null,
+          checkin_status: Boolean(storedUser.checkin_status),
+        });
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("user_token");
     if (!token) {
       router.push("/login");
       return;
     }
+
+    hydrateFromStorage();
+
     fetch("/api/me", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -34,7 +55,15 @@ export default function MyTicketPage() {
       .then((r) => r.json())
       .then((data) => {
         if (data.user) {
-          setUser(data.user);
+          const normalizedUser = {
+            ...data.user,
+            categories: formatCategories(data.user.categories),
+          };
+          setUser(normalizedUser);
+          try {
+            const storedUser = JSON.parse(localStorage.getItem("user_data") || "{}");
+            localStorage.setItem("user_data", JSON.stringify({ ...storedUser, ...normalizedUser }));
+          } catch {}
         } else {
           toast.error("Could not load your profile");
         }
@@ -77,8 +106,8 @@ export default function MyTicketPage() {
     );
   }
 
-  const cats = user.categories ? user.categories.split(",") : [];
-  const hasRegistered = cats.length > 0 && cats[0] !== "Unassigned";
+  const cats = normalizeCategories(user.categories);
+  const hasRegistered = cats.length > 0;
 
   return (
     <div className="min-h-screen px-4 py-10">

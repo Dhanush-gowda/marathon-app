@@ -15,10 +15,12 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
+      const normalizedEmail = email.trim().toLowerCase();
+
       const res = await fetch("/api/admin/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email: normalizedEmail, password }),
       });
 
       const data = await res.json();
@@ -62,7 +64,7 @@ export default function AdminLoginPage() {
               className="input-field"
               placeholder="admin@marathon.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value.trimStart())}
             />
           </div>
 

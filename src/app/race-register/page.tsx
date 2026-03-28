@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CATEGORIES } from "@/lib/utils";
+import { CATEGORIES, formatCategories, getPrimaryCategory, normalizeCategories } from "@/lib/utils";
 import toast from "react-hot-toast";
 
 export default function RaceRegisterPage() {
@@ -12,6 +12,12 @@ export default function RaceRegisterPage() {
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [alreadyRegistered, setAlreadyRegistered] = useState(false);
 
+  const syncRegistrationState = (value: string | string[] | null | undefined) => {
+    const normalized = normalizeCategories(value);
+    setSelectedCats(normalized);
+    setAlreadyRegistered(normalized.length > 0);
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("user_token");
     if (!token) {
@@ -19,6 +25,14 @@ export default function RaceRegisterPage() {
       router.push("/login");
       return;
     }
+
+    try {
+      const storedUser = JSON.parse(localStorage.getItem("user_data") || "null");
+      if (storedUser?.categories) {
+        syncRegistrationState(storedUser.categories);
+      }
+    } catch {}
+
     // Check if already registered for races
     fetch("/api/me", {
       method: "POST",
@@ -27,9 +41,20 @@ export default function RaceRegisterPage() {
     })
       .then((r) => r.json())
       .then((data) => {
-        if (data.user?.categories) {
-          setAlreadyRegistered(true);
-          setSelectedCats(data.user.categories.split(","));
+        if (data.user) {
+          syncRegistrationState(data.user.categories);
+          try {
+            const storedUser = JSON.parse(localStorage.getItem("user_data") || "{}");
+            localStorage.setItem(
+              "user_data",
+              JSON.stringify({
+                ...storedUser,
+                ...data.user,
+                category: getPrimaryCategory(data.user.categories),
+                categories: formatCategories(data.user.categories),
+              })
+            );
+          } catch {}
         }
         setCheckingAuth(false);
       })
@@ -61,6 +86,22 @@ export default function RaceRegisterPage() {
         toast.error(data.error || "Registration failed");
         return;
       }
+
+      const normalizedCategories = normalizeCategories(data.user?.categories || selectedCats);
+      syncRegistrationState(normalizedCategories);
+      try {
+        const storedUser = JSON.parse(localStorage.getItem("user_data") || "{}");
+        localStorage.setItem(
+          "user_data",
+          JSON.stringify({
+            ...storedUser,
+            ...data.user,
+            category: getPrimaryCategory(normalizedCategories),
+            categories: formatCategories(normalizedCategories),
+          })
+        );
+      } catch {}
+
       toast.success("Race registration successful! View your ticket.");
       router.push("/my-ticket");
     } catch {

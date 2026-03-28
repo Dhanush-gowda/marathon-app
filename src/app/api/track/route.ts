@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
+import { getParticipantCategoryLabel } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest) {
     // Try bib number first
     const { data: bibResult } = await supabaseAdmin
       .from("users")
-      .select("id, name, email, bib_number, category, checkin_status")
+      .select("id, name, email, bib_number, category, categories, checkin_status")
       .eq("bib_number", trimmed)
       .single();
 
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest) {
       // Try email
       const { data: emailResult } = await supabaseAdmin
         .from("users")
-        .select("id, name, email, bib_number, category, checkin_status")
+        .select("id, name, email, bib_number, category, categories, checkin_status")
         .eq("email", trimmed.toLowerCase())
         .single();
 
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
         name: userData.name,
         email: userData.email,
         bib_number: userData.bib_number,
-        category: userData.category,
+        category: getParticipantCategoryLabel(userData),
         checkin_status: userData.checkin_status,
         finish_time: result?.finish_time || null,
         rank: result?.rank || null,
