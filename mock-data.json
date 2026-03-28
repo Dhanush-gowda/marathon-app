@@ -16,8 +16,8 @@
     {
       "id": "b25b6426-4820-4808-a088-ef1a152f0b56",
       "created_at": "2026-03-28T16:38:39.711Z",
-      "checkin_status": false,
-      "bib_number": null,
+      "checkin_status": true,
+      "bib_number": "1000",
       "password_hash": "2e7a88012310194a3ebcac9c68d26fd939ba4908bccd61d034f8a61716d00379",
       "categories": "RBA Warrior 5K,RBA Warrior 3K",
       "rank": null,
