@@ -1,0 +1,150 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-gray-950 text-white antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(59, 130, 246, 0.18), transparent 30%),
+      radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.14), transparent 32%),
+      linear-gradient(180deg, #030712 0%, #111827 100%);
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .glass {
+    @apply bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl;
+  }
+
+  .glass-strong {
+    @apply bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-6 py-3 
+           bg-gradient-to-r from-blue-600 to-purple-600 
+           hover:from-blue-500 hover:to-purple-500 
+           text-white font-semibold rounded-xl 
+           transition-all duration-300 
+           hover:shadow-lg hover:shadow-blue-500/25 
+           active:scale-95 
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
+           text-sm sm:text-base;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-6 py-3 
+           bg-white/10 hover:bg-white/20 
+           text-white font-semibold rounded-xl 
+           border border-white/20 
+           transition-all duration-300 
+           active:scale-95
+           text-sm sm:text-base;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-6 py-3 
+           bg-gradient-to-r from-red-600 to-rose-600 
+           hover:from-red-500 hover:to-rose-500 
+           text-white font-semibold rounded-xl 
+           transition-all duration-300 
+           active:scale-95;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 
+           bg-white/5 border border-white/10 rounded-xl 
+           text-white placeholder-gray-400 
+           focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 
+           transition-all duration-300
+           text-base;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10;
+  }
+
+  .section-shell {
+    @apply relative z-10 mx-auto w-full max-w-6xl px-4;
+  }
+
+  .winner-badge {
+    @apply inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200;
+  }
+}
+
+@keyframes runnerFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(-14px, 10px, 0) scale(1.03);
+  }
+}
+
+@keyframes winnerGlow {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes confettiBurst {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(0.4);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--tx), var(--ty), 0) rotate(540deg) scale(1.15);
+  }
+}
+
+@keyframes pulseLine {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(-4px);
+  }
+
+  50% {
+    opacity: 0.85;
+    transform: translateY(4px);
+  }
+}
+
+.runner-float {
+  animation: runnerFloat 16s ease-in-out infinite;
+}
+
+.winner-glow {
+  animation: winnerGlow 3s ease-in-out infinite;
+}
+
+.confetti-piece {
+  animation: confettiBurst 2.8s ease-out infinite;
+}
+
+.scan-line {
+  animation: pulseLine 1.8s ease-in-out infinite;
+}
