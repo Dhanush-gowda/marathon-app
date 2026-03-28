@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   phone TEXT,
+  password_hash TEXT,
   category TEXT NOT NULL DEFAULT 'Full Marathon',
   bib_number TEXT UNIQUE,
   checkin_status BOOLEAN DEFAULT FALSE,

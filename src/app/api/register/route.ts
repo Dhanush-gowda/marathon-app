@@ -2,16 +2,23 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
 import { buildTicketPayload, getNextBibNumber } from "@/lib/utils";
+import { hashPassword, createUserToken } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, category } = body;
+    const { name, email, phone, category, password } = body;
 
-    // Validate required fields
-    if (!name || !email || !phone || !category) {
+    if (!name || !email || !phone || !category || !password) {
       return NextResponse.json(
         { error: "All fields are required" },
+        { status: 400 }
+      );
+    }
+
+    if (password.length < 6) {
+      return NextResponse.json(
+        { error: "Password must be at least 6 characters" },
         { status: 400 }
       );
     }
@@ -46,12 +53,15 @@ export async function POST(request: NextRequest) {
     const bibNumber = getNextBibNumber(existingUsers || []);
 
     // Insert participant
+    const password_hash = hashPassword(password);
+
     const { data, error } = await supabaseAdmin.from("users").insert({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       phone: phone.trim(),
       category,
       bib_number: bibNumber,
+      password_hash,
     }).select().single();
 
     if (error) {
@@ -62,10 +72,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const token = createUserToken(data.id, data.email);
+
     return NextResponse.json(
       {
         success: true,
-        user: data,
+        token,
+        user: { id: data.id, name: data.name, email: data.email, phone: data.phone, category: data.category, bib_number: data.bib_number },
         ticketPayload: buildTicketPayload(data),
       },
       { status: 201 }

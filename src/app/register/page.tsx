@@ -18,6 +18,8 @@ export default function RegisterPage() {
     name: "",
     email: "",
     phone: "",
+    password: "",
+    confirmPassword: "",
     category: CATEGORIES[0] as string,
   });
   const [loading, setLoading] = useState(false);
@@ -62,13 +64,22 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.password !== form.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (form.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
     setLoading(true);
 
     try {
+      const { confirmPassword: _, ...payload } = form;
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -78,6 +89,10 @@ export default function RegisterPage() {
         return;
       }
 
+      if (data.token) {
+        localStorage.setItem("user_token", data.token);
+        localStorage.setItem("user_data", JSON.stringify(data.user));
+      }
       toast.success("Registration successful!");
       setRegisteredUser(data.user);
       setTicketPayload(data.ticketPayload || "");
@@ -130,7 +145,7 @@ export default function RegisterPage() {
                     onClick={() => {
                       setRegisteredUser(null);
                       setTicketPayload("");
-                      setForm({ name: "", email: "", phone: "", category: CATEGORIES[0] });
+                      setForm({ name: "", email: "", phone: "", password: "", confirmPassword: "", category: CATEGORIES[0] });
                     }}
                     className="btn-secondary"
                   >
@@ -225,6 +240,38 @@ export default function RegisterPage() {
           </div>
 
           <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1.5">
+              Create Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              minLength={6}
+              className="input-field"
+              placeholder="Min 6 characters"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+            />
+          </div>
+
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-300 mb-1.5">
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              required
+              minLength={6}
+              className="input-field"
+              placeholder="Re-enter password"
+              value={form.confirmPassword}
+              onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+            />
+          </div>
+
+          <div>
             <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-1.5">
               Category
             </label>
@@ -245,6 +292,11 @@ export default function RegisterPage() {
           <div className="rounded-2xl border border-cyan-400/10 bg-cyan-400/5 p-4 text-sm text-slate-300">
             Registration generates a QR pass instantly. Admin can scan it on race day for fast entry.
           </div>
+
+          <p className="text-center text-sm text-gray-400">
+            Already have an account?{" "}
+            <a href="/login" className="text-blue-400 hover:text-blue-300 font-medium">Sign in</a>
+          </p>
 
           <button type="submit" className="btn-primary w-full py-4 text-lg" disabled={loading}>
             {loading ? (

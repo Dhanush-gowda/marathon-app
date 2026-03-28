@@ -122,6 +122,7 @@ class QueryBuilder implements PromiseLike<QueryResult> {
           created_at: new Date().toISOString(),
           checkin_status: false,
           bib_number: null,
+          password_hash: null,
           rank: null,
           ...this._mutateData,
         };

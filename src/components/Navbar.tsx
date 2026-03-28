@@ -1,13 +1,31 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loggedInUser, setLoggedInUser] = useState<{ name: string } | null>(null);
   const isAdmin = pathname.startsWith("/admin");
+
+  useEffect(() => {
+    const userData = localStorage.getItem("user_data");
+    if (userData) {
+      try { setLoggedInUser(JSON.parse(userData)); } catch { setLoggedInUser(null); }
+    } else {
+      setLoggedInUser(null);
+    }
+  }, [pathname]);
+
+  const handleUserLogout = () => {
+    localStorage.removeItem("user_token");
+    localStorage.removeItem("user_data");
+    setLoggedInUser(null);
+    router.push("/");
+  };
 
   const publicLinks = [
     { href: "/", label: "Home" },
@@ -52,10 +70,23 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {!isAdmin && loggedInUser ? (
+              <div className="ml-2 flex items-center gap-2">
+                <span className="text-sm text-gray-300 truncate max-w-[120px]">{loggedInUser.name}</span>
+                <button onClick={handleUserLogout} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 text-gray-300 hover:bg-white/20 transition-colors">Logout</button>
+              </div>
+            ) : !isAdmin ? (
+              <Link
+                href="/login"
+                className="ml-2 px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-500 hover:to-purple-500 transition-all"
+              >
+                Sign In
+              </Link>
+            ) : null}
             {!isAdmin && (
               <Link
                 href="/admin/login"
-                className="ml-2 px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-300 transition-colors"
+                className="ml-1 px-3 py-2 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-300 transition-colors"
               >
                 Admin
               </Link>
@@ -97,6 +128,22 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {!isAdmin && loggedInUser ? (
+              <button
+                onClick={() => { handleUserLogout(); setMobileOpen(false); }}
+                className="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-red-400 hover:bg-white/5"
+              >
+                Logout ({loggedInUser.name})
+              </button>
+            ) : !isAdmin ? (
+              <Link
+                href="/login"
+                onClick={() => setMobileOpen(false)}
+                className="block px-4 py-3 rounded-xl text-base font-medium bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center"
+              >
+                Sign In
+              </Link>
+            ) : null}
             {!isAdmin && (
               <Link
                 href="/admin/login"
