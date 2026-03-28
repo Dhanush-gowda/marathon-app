@@ -12,6 +12,19 @@
       "email": "prod-smoke1774715897239@example.com",
       "phone": "9999999999",
       "category": "RBA Warrior 5K"
+    },
+    {
+      "id": "b25b6426-4820-4808-a088-ef1a152f0b56",
+      "created_at": "2026-03-28T16:38:39.711Z",
+      "checkin_status": false,
+      "bib_number": null,
+      "password_hash": "2e7a88012310194a3ebcac9c68d26fd939ba4908bccd61d034f8a61716d00379",
+      "categories": null,
+      "rank": null,
+      "name": "Prod Admin Smoke",
+      "email": "prod-admin-smoke1774715918868@example.com",
+      "phone": "9999999999",
+      "category": "Unassigned"
     }
   ],
   "results": []
