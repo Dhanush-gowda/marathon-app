@@ -15,6 +15,22 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      // Try admin login first
+      const adminRes = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      if (adminRes.ok) {
+        const adminData = await adminRes.json();
+        localStorage.setItem("admin_token", adminData.token);
+        localStorage.setItem("user_data", JSON.stringify({ name: "Admin" }));
+        toast.success("Welcome, Admin!");
+        router.push("/admin/dashboard");
+        return;
+      }
+
+      // Try user login
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -22,7 +38,7 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        toast.error(data.error || "Login failed");
+        toast.error(data.error || "Invalid email or password");
         return;
       }
       localStorage.setItem("user_token", data.token);

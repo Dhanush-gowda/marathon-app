@@ -1,7 +1,29 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { RouteMaps } from "@/components/RouteMaps";
 
 export default function HomePage() {
+  const router = useRouter();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem("user_token");
+    const admin = localStorage.getItem("admin_token");
+    setIsLoggedIn(!!(token || admin));
+    setChecked(true);
+
+    // Mobile: redirect unauthenticated users to login
+    if (!token && !admin && window.innerWidth < 768) {
+      router.push("/login");
+    }
+  }, [router]);
+
+  if (!checked) return null;
+
   return (
     <div className="relative overflow-hidden">
       <section className="relative min-h-[88vh] flex items-center">
@@ -12,17 +34,23 @@ export default function HomePage() {
             </div>
             <h1 className="max-w-3xl text-4xl font-extrabold leading-tight sm:text-5xl lg:text-6xl">
               <span className="bg-gradient-to-r from-sky-300 via-cyan-200 to-emerald-200 bg-clip-text text-transparent">
-                3K and 5K forest run management,
+                3K and 5K forest run,
               </span>{" "}
               built for race day speed.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-300 sm:text-xl">
-              Registrations, QR ticketing, live results, winner celebration, and admin control in one responsive experience.
+              QR ticketing, live results, winner celebration, and full race management in one responsive experience.
             </p>
             <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <Link href="/register" className="btn-primary text-base sm:text-lg px-8 py-4">
-                Register For 3K / 5K
-              </Link>
+              {isLoggedIn ? (
+                <Link href="/race-register" className="btn-primary text-base sm:text-lg px-8 py-4">
+                  Register For 3K / 5K
+                </Link>
+              ) : (
+                <Link href="/register" className="btn-primary text-base sm:text-lg px-8 py-4">
+                  Sign Up &amp; Register
+                </Link>
+              )}
               <Link href="/leaderboard" className="btn-secondary text-base sm:text-lg px-8 py-4">
                 View Live Results
               </Link>
@@ -47,7 +75,7 @@ export default function HomePage() {
               <div className="winner-badge">Featured Event</div>
               <h2 className="mt-5 text-2xl font-bold sm:text-3xl">Turahalli Twilight Run</h2>
               <p className="mt-3 text-sm leading-6 text-slate-300 sm:text-base">
-                A mobile-first race console for your Bengaluru forest event with fast admin actions, instant participant tickets, and dramatic podium moments.
+                A mobile-first race console for your Bengaluru forest event with instant participant tickets and dramatic podium moments.
               </p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
@@ -72,36 +100,12 @@ export default function HomePage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            {
-              icon: "📝",
-              title: "Easy Registration",
-              desc: "Sign up in seconds with our streamlined registration form.",
-            },
-            {
-              icon: "🏆",
-              title: "Live Leaderboard",
-              desc: "Real-time rankings filtered by category. See where you stand.",
-            },
-            {
-              icon: "📍",
-              title: "Race Tracking",
-              desc: "Track any participant by bib number or email during the race.",
-            },
-            {
-              icon: "🎫",
-              title: "QR Entry Ticket",
-              desc: "Generate a scannable registration ticket the moment a runner signs up.",
-            },
-            {
-              icon: "🗺️",
-              title: "Route Maps",
-              desc: "Showcase the 3K and 5K Turahalli Forest loops with clear route cards.",
-            },
-            {
-              icon: "🔒",
-              title: "Secure Admin",
-              desc: "Protected admin panel for managing the entire event.",
-            },
+            { icon: "🏃", title: "Easy Registration", desc: "Create an account, pick your category, and get your race ticket." },
+            { icon: "🏆", title: "Live Leaderboard", desc: "Real-time rankings filtered by category. See where you stand." },
+            { icon: "🎫", title: "QR Entry Ticket", desc: "Get a scannable QR pass the moment you register for a race." },
+            { icon: "🗺️", title: "Route Maps", desc: "Explore the 3K and 5K Turahalli Forest loops with clear route cards." },
+            { icon: "📱", title: "Mobile First", desc: "Optimized for phones — sign up, register, and check results on the go." },
+            { icon: "🔒", title: "Secure Access", desc: "Password-protected accounts with admin-only management panel." },
           ].map((feature) => (
             <div key={feature.title} className="glass p-6 card-hover">
               <div className="text-4xl mb-4">{feature.icon}</div>
@@ -142,15 +146,16 @@ export default function HomePage() {
             Ready for the forest start line?
           </h2>
           <p className="text-gray-300 mb-8">
-            Register today and get a QR race ticket, auto-generated bib, and instant access to results tracking.
+            {isLoggedIn
+              ? "Register for a race and get your QR entry pass, auto-generated BIB, and live result tracking."
+              : "Sign up today and get a QR race ticket, auto-generated bib, and instant access to results tracking."}
           </p>
-          <Link href="/register" className="btn-primary text-lg px-10 py-4">
-            Get Started →
+          <Link href={isLoggedIn ? "/race-register" : "/register"} className="btn-primary text-lg px-10 py-4">
+            {isLoggedIn ? "Register for a Race" : "Get Started"} →
           </Link>
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-white/10 px-4 py-8 text-center text-gray-500 text-sm">
         <p>© {new Date().getFullYear()} Marathon Manager. All rights reserved.</p>
       </footer>

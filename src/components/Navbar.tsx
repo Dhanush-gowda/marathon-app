@@ -9,10 +9,13 @@ export function Navbar() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [loggedInUser, setLoggedInUser] = useState<{ name: string } | null>(null);
+  const [isAdminSession, setIsAdminSession] = useState(false);
   const isAdmin = pathname.startsWith("/admin");
 
   useEffect(() => {
     const userData = localStorage.getItem("user_data");
+    const adminToken = localStorage.getItem("admin_token");
+    setIsAdminSession(!!adminToken);
     if (userData) {
       try { setLoggedInUser(JSON.parse(userData)); } catch { setLoggedInUser(null); }
     } else {
@@ -20,20 +23,27 @@ export function Navbar() {
     }
   }, [pathname]);
 
-  const handleUserLogout = () => {
+  const handleLogout = () => {
     localStorage.removeItem("user_token");
     localStorage.removeItem("user_data");
+    localStorage.removeItem("admin_token");
     setLoggedInUser(null);
-    router.push("/");
+    setIsAdminSession(false);
+    router.push("/login");
   };
 
-  const publicLinks = [
-    { href: "/", label: "Home" },
-    { href: "/register", label: "Register" },
-    { href: "/route-map", label: "Route Map" },
-    { href: "/leaderboard", label: "Leaderboard" },
-    { href: "/track", label: "Track" },
-  ];
+  const userLinks = loggedInUser
+    ? [
+        { href: "/", label: "Home" },
+        { href: "/race-register", label: "Race Registration" },
+        { href: "/leaderboard", label: "Leaderboard" },
+        { href: "/route-map", label: "Route Map" },
+      ]
+    : [
+        { href: "/", label: "Home" },
+        { href: "/leaderboard", label: "Leaderboard" },
+        { href: "/route-map", label: "Route Map" },
+      ];
 
   const adminLinks = [
     { href: "/admin/dashboard", label: "Dashboard" },
@@ -41,7 +51,7 @@ export function Navbar() {
     { href: "/admin/results", label: "Results" },
   ];
 
-  const links = isAdmin ? adminLinks : publicLinks;
+  const links = isAdmin ? adminLinks : userLinks;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-950/80 backdrop-blur-xl border-b border-white/10">
@@ -70,10 +80,13 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {!isAdmin && loggedInUser ? (
+            {loggedInUser ? (
               <div className="ml-2 flex items-center gap-2">
+                {isAdminSession && (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-300 border border-amber-500/30">Admin</span>
+                )}
                 <span className="text-sm text-gray-300 truncate max-w-[120px]">{loggedInUser.name}</span>
-                <button onClick={handleUserLogout} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 text-gray-300 hover:bg-white/20 transition-colors">Logout</button>
+                <button onClick={handleLogout} className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 text-gray-300 hover:bg-white/20 transition-colors">Logout</button>
               </div>
             ) : !isAdmin ? (
               <Link
@@ -83,14 +96,6 @@ export function Navbar() {
                 Sign In
               </Link>
             ) : null}
-            {!isAdmin && (
-              <Link
-                href="/admin/login"
-                className="ml-1 px-3 py-2 rounded-lg text-xs font-medium text-gray-500 hover:text-gray-300 transition-colors"
-              >
-                Admin
-              </Link>
-            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -128,9 +133,9 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
-            {!isAdmin && loggedInUser ? (
+            {loggedInUser ? (
               <button
-                onClick={() => { handleUserLogout(); setMobileOpen(false); }}
+                onClick={() => { handleLogout(); setMobileOpen(false); }}
                 className="block w-full text-left px-4 py-3 rounded-xl text-base font-medium text-red-400 hover:bg-white/5"
               >
                 Logout ({loggedInUser.name})
@@ -144,15 +149,6 @@ export function Navbar() {
                 Sign In
               </Link>
             ) : null}
-            {!isAdmin && (
-              <Link
-                href="/admin/login"
-                onClick={() => setMobileOpen(false)}
-                className="block px-4 py-3 rounded-xl text-base font-medium text-gray-500 hover:text-gray-300"
-              >
-                Admin
-              </Link>
-            )}
           </div>
         </div>
       )}

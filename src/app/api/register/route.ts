@@ -1,15 +1,14 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-server";
-import { buildTicketPayload, getNextBibNumber } from "@/lib/utils";
 import { hashPassword, createUserToken } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, category, password } = body;
+    const { name, email, phone, password } = body;
 
-    if (!name || !email || !phone || !category || !password) {
+    if (!name || !email || !phone || !password) {
       return NextResponse.json(
         { error: "All fields are required" },
         { status: 400 }
@@ -23,7 +22,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return NextResponse.json(
@@ -32,7 +30,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for duplicate registration
     const { data: existing } = await supabaseAdmin
       .from("users")
       .select("id")
@@ -46,21 +43,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { data: existingUsers } = await supabaseAdmin
-      .from("users")
-      .select("bib_number");
-
-    const bibNumber = getNextBibNumber(existingUsers || []);
-
-    // Insert participant
     const password_hash = hashPassword(password);
 
     const { data, error } = await supabaseAdmin.from("users").insert({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       phone: phone.trim(),
-      category,
-      bib_number: bibNumber,
+      category: "Unassigned",
       password_hash,
     }).select().single();
 
@@ -78,8 +67,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         token,
-        user: { id: data.id, name: data.name, email: data.email, phone: data.phone, category: data.category, bib_number: data.bib_number },
-        ticketPayload: buildTicketPayload(data),
+        user: { id: data.id, name: data.name, email: data.email, phone: data.phone },
       },
       { status: 201 }
     );
