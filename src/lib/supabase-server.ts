@@ -4,6 +4,7 @@ import { mockDBClient } from "./mock-db";
 function createAdminClient() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const hasGitHubDataStore = !!process.env.GITHUB_DATA_TOKEN && !!process.env.GITHUB_DATA_REPO;
 
   if (url && key) {
     console.log("🗄️  Using Supabase database");
@@ -12,7 +13,12 @@ function createAdminClient() {
     });
   }
 
-  console.log("🗄️  Using local mock database (no Supabase configured)");
+  if (hasGitHubDataStore) {
+    console.log("🗄️  Using GitHub-backed mock database");
+  } else {
+    console.log("🗄️  Using local mock database (no Supabase configured)");
+  }
+
   return mockDBClient;
 }
 

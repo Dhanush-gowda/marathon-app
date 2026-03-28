@@ -2,40 +2,136 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 
-// On Vercel, process.cwd() is read-only. Use /tmp for persistence within warm lambdas.
 const SOURCE_DB = path.join(process.cwd(), "mock-data.json");
-const isVercel = !!process.env.VERCEL;
-const DB_FILE = isVercel ? "/tmp/mock-data.json" : SOURCE_DB;
+const GITHUB_DATA_TOKEN = process.env.GITHUB_DATA_TOKEN;
+const GITHUB_DATA_REPO = process.env.GITHUB_DATA_REPO;
+const GITHUB_DATA_BRANCH = process.env.GITHUB_DATA_BRANCH || "data-store";
+const GITHUB_DATA_PATH = process.env.GITHUB_DATA_PATH || "mock-data.json";
+const USE_GITHUB_STORE = Boolean(GITHUB_DATA_TOKEN && GITHUB_DATA_REPO);
 
 interface DBData {
   users: any[];
   results: any[];
 }
 
-function ensureTmpDB() {
-  if (isVercel && !fs.existsSync(DB_FILE)) {
-    try {
-      const seed = fs.existsSync(SOURCE_DB)
-        ? fs.readFileSync(SOURCE_DB, "utf-8")
-        : '{"users":[],"results":[]}';
-      fs.writeFileSync(DB_FILE, seed);
-    } catch {}
-  }
-}
-
-function readDB(): DBData {
-  try {
-    ensureTmpDB();
-    if (fs.existsSync(DB_FILE)) {
-      return JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
-    }
-  } catch {}
+function getDefaultDB(): DBData {
   return { users: [], results: [] };
 }
 
-function writeDB(data: DBData) {
+function readLocalSeed(): DBData {
   try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+    if (fs.existsSync(SOURCE_DB)) {
+      return JSON.parse(fs.readFileSync(SOURCE_DB, "utf-8"));
+    }
+  } catch {}
+  return getDefaultDB();
+}
+
+function getGitHubPath(): string {
+  return GITHUB_DATA_PATH.split("/").map(encodeURIComponent).join("/");
+}
+
+async function fetchGitHubFile() {
+  if (!USE_GITHUB_STORE) {
+    return null;
+  }
+
+  const response = await fetch(
+    `https://api.github.com/repos/${GITHUB_DATA_REPO}/contents/${getGitHubPath()}?ref=${encodeURIComponent(GITHUB_DATA_BRANCH)}`,
+    {
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${GITHUB_DATA_TOKEN}`,
+        "User-Agent": "marathon-app",
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`GitHub data read failed with status ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const content = Buffer.from(payload.content || "", "base64").toString("utf-8");
+
+  return {
+    sha: payload.sha as string,
+    data: JSON.parse(content || '{"users":[],"results":[]}') as DBData,
+  };
+}
+
+async function readDB(): Promise<DBData> {
+  if (USE_GITHUB_STORE) {
+    try {
+      const remoteFile = await fetchGitHubFile();
+      return remoteFile?.data || readLocalSeed();
+    } catch (error) {
+      console.error("MockDB GitHub read error:", error);
+      return readLocalSeed();
+    }
+  }
+
+  try {
+    if (fs.existsSync(SOURCE_DB)) {
+      return JSON.parse(fs.readFileSync(SOURCE_DB, "utf-8"));
+    }
+  } catch {}
+  return getDefaultDB();
+}
+
+async function writeGitHubDB(data: DBData, attempt = 0): Promise<void> {
+  if (!USE_GITHUB_STORE) {
+    return;
+  }
+
+  const existingFile = await fetchGitHubFile();
+  const response = await fetch(
+    `https://api.github.com/repos/${GITHUB_DATA_REPO}/contents/${getGitHubPath()}`,
+    {
+      method: "PUT",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${GITHUB_DATA_TOKEN}`,
+        "Content-Type": "application/json",
+        "User-Agent": "marathon-app",
+      },
+      body: JSON.stringify({
+        message: `Update runtime data ${new Date().toISOString()}`,
+        branch: GITHUB_DATA_BRANCH,
+        sha: existingFile?.sha,
+        content: Buffer.from(JSON.stringify(data, null, 2), "utf-8").toString("base64"),
+      }),
+    }
+  );
+
+  if (response.status === 409 && attempt < 2) {
+    await writeGitHubDB(data, attempt + 1);
+    return;
+  }
+
+  if (!response.ok) {
+    throw new Error(`GitHub data write failed with status ${response.status}`);
+  }
+}
+
+async function writeDB(data: DBData) {
+  if (USE_GITHUB_STORE) {
+    try {
+      await writeGitHubDB(data);
+      return;
+    } catch (error) {
+      console.error("MockDB GitHub write error:", error);
+      throw error;
+    }
+  }
+
+  try {
+    fs.writeFileSync(SOURCE_DB, JSON.stringify(data, null, 2));
   } catch (e) {
     console.error("MockDB write error:", e);
   }
@@ -125,9 +221,9 @@ class QueryBuilder implements PromiseLike<QueryResult> {
       .every(([field, value]) => String(row[field]) === String(value));
   }
 
-  private _exec(): QueryResult {
+  private async _exec(): Promise<QueryResult> {
     try {
-      const db = readDB();
+      const db = await readDB();
       const table: any[] = (db[this._table as keyof DBData] as any[]) || [];
 
       // INSERT
@@ -143,7 +239,7 @@ class QueryBuilder implements PromiseLike<QueryResult> {
           ...this._mutateData,
         };
         (db[this._table as keyof DBData] as any[]).push(newItem);
-        writeDB(db);
+        await writeDB(db);
         return {
           data: this._single || this._postSelect ? newItem : [newItem],
           error: null,
@@ -155,7 +251,7 @@ class QueryBuilder implements PromiseLike<QueryResult> {
         db[this._table as keyof DBData] = table.map((row: any) =>
           this._matchRow(row) ? { ...row, ...this._mutateData } : row
         ) as any;
-        writeDB(db);
+        await writeDB(db);
         return { data: null, error: null };
       }
 
@@ -182,7 +278,7 @@ class QueryBuilder implements PromiseLike<QueryResult> {
             ...this._mutateData,
           });
         }
-        writeDB(db);
+        await writeDB(db);
         return { data: null, error: null };
       }
 
