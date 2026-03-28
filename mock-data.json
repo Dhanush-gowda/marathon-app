@@ -1,4 +1,18 @@
 {
-  "users": [],
+  "users": [
+    {
+      "id": "0e0b6920-9b94-4132-9f08-6951b6ffd4cc",
+      "created_at": "2026-03-28T16:38:18.368Z",
+      "checkin_status": false,
+      "bib_number": null,
+      "password_hash": "2e7a88012310194a3ebcac9c68d26fd939ba4908bccd61d034f8a61716d00379",
+      "categories": null,
+      "rank": null,
+      "name": "Prod Smoke",
+      "email": "prod-smoke1774715897239@example.com",
+      "phone": "9999999999",
+      "category": "Unassigned"
+    }
+  ],
   "results": []
 }
